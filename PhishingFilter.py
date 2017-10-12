@@ -30,14 +30,21 @@ import ast
 import email.utils
 import warnings
 
-
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
 reload(sys)  
 sys.setdefaultencoding('ISO-8859-2')
-# Verbose process
-verbose = True
-# Classification Categories
-categories = [
-  'Phishing',
-  'Harmless',
-]
+
+class PhishingFilter:
+	# Verbose process
+	verbose = True
+	# Classification Categories
+	CATEGORIES = [ 'Phishing', 'Harmless' ]
+
+	def setVerbose(verbose):
+		self.verbose = verbose
+	
+	def getVerbose():
+		return verbose
+	
+	def getCategories():
+		return CATEGORIES
