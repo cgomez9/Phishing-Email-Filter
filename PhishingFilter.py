@@ -50,7 +50,7 @@ class PhishingFilter:
 		return CATEGORIES
 
 	# Get the email body of an mbox email
-	def getEmailBody(message):
+	def getEmailBodyFromMbox(message):
 		body = None
 		if message.is_multipart():
 			for part in message.walk():
@@ -65,11 +65,32 @@ class PhishingFilter:
 		return body
 
 	# Get all links from email body
-	def getEmailLinks(body):
+	def getLinksFromEmailBody(body):
 	  body_html = BeautifulSoup(body, 'html.parser', from_encoding="iso-8859-1")
 	  return body_html.find_all('a')
 
 	# Get plain text from email body
-	def getEmailPlainText(body):
+	def getPlainTextFromEmailBody(body):
 	  body_html = BeautifulSoup(body, 'html.parser', from_encoding="iso-8859-1")
 	  return body_html.get_text()
+
+	# Extrae las palabras mas comunes usadas en Phishing
+    def extractCommonPhishingWordsFromBody(body):
+		binary_cstring = []
+		common_words = [
+			'ACCOUNT', 'ACCESS', 'BANK', 'CREDIT',
+			'VERIFY', 'IDENTITY', 'INCONVENIENCE',
+	        'INFORMATION', 'LIMITED', 'LOG',
+	        'MINUTES', 'PASSWORD', 'RECENTLY',
+	        'RISK','SOCIAL', 'SECURITY',
+	        'SERVICE', 'SUSPENDED','VALIDATE'
+		]
+		for word in common_words:
+	    	if re.search(word, body, re.IGNORECASE):
+	       		words = re.findall(word, body, re.IGNORECASE)
+	        	if verbose:
+	          		print("[Warning!] Word "+word+" founded ({} times) ".format(len(words)))
+	        		binary_cstring.append(len(words))
+	      		else:
+	        		binary_cstring.append(0)
+		return binary_cstring
