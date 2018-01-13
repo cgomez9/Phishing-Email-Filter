@@ -143,3 +143,7 @@ class PhishingFilter:
 							print("[Warning!] Found word "+common_phishing_word+" in attachments")
 						found_word = True
 		return found_word
+
+	# Feature 2 - Look for IP addresses inside email body
+	def findIPAddressesInEmailBody(body):
+	  return re.findall( r'[0-9]+(?:\.[0-9]+){3}', body )
