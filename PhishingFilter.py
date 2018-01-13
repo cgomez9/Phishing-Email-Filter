@@ -39,6 +39,28 @@ class PhishingFilter:
 	verbose = True
 	# Classification Categories
 	CATEGORIES = [ 'Phishing', 'Harmless' ]
+	# Name of model file saved
+	model_path = os.path.join(request.folder, 'static', "finalized_model.sav")
+	# Name of route of the model
+	static_path = os.path.join(request.folder, 'static')
+	# Most common words in phishing email attachments
+	common_phishing_words_attachments = [
+		'DHL', 'NOTIFICATION', 'DELIVERY', 'EXPRESS',
+		'LABEL', 'SHIPMENT', 'ACCOUNT', 'RESTORE',
+		'VERIFY', 'NOTIFICATION', 'FEDEX', 'CONFIRMATION',
+		'ALERT', 'UPS', 'INTERNATIONAL', 'PARCEL',
+		'POST', 'REPORT', 'TICKET', 'IDNOTIFICATION',
+		'SHIPPING'
+	]
+	# Most common words in phishing email message
+	common_phishing_words = [
+		'ACCOUNT', 'ACCESS', 'BANK', 'CREDIT',
+		'VERIFY', 'IDENTITY', 'INCONVENIENCE',
+		'INFORMATION', 'LIMITED', 'LOG',
+		'MINUTES', 'PASSWORD', 'RECENTLY',
+		'RISK','SOCIAL', 'SECURITY',
+		'SERVICE', 'SUSPENDED','VALIDATE'
+	]
 
 	def setVerbose(verbose):
 		self.verbose = verbose
@@ -74,18 +96,10 @@ class PhishingFilter:
 	  body_html = BeautifulSoup(body, 'html.parser', from_encoding="iso-8859-1")
 	  return body_html.get_text()
 
-	# Extrae las palabras mas comunes usadas en Phishing
-    def extractCommonPhishingWordsFromBody(body):
+	# Find most used words in Phishing emails in email body
+	def findCommonPhishingWordsInBody(body):
 		binary_cstring = []
-		common_words = [
-			'ACCOUNT', 'ACCESS', 'BANK', 'CREDIT',
-			'VERIFY', 'IDENTITY', 'INCONVENIENCE',
-	        'INFORMATION', 'LIMITED', 'LOG',
-	        'MINUTES', 'PASSWORD', 'RECENTLY',
-	        'RISK','SOCIAL', 'SECURITY',
-	        'SERVICE', 'SUSPENDED','VALIDATE'
-		]
-		for word in common_words:
+		for word in self.common_words:
 	    	if re.search(word, body, re.IGNORECASE):
 	       		words = re.findall(word, body, re.IGNORECASE)
 	        	if verbose:
@@ -94,3 +108,38 @@ class PhishingFilter:
 	      		else:
 	        		binary_cstring.append(0)
 		return binary_cstring
+
+	# Find most used words in phishing email attachments
+	def findCommonWordsInEmailAttachements(message,attachments=None):
+	    binary_castring = []
+	    # If we need to search for attachments inside email
+	    if attachments is None:
+	        return self.findCommonWordsInEmailAttachementsFromMessage(message)
+	    # If we get attachments directly
+	    else:
+	       return self.findCommonWordsInEmailAttachementsFromAttachments(attachments)
+
+	def findCommonWordsInEmailAttachementsFromMessage(message):
+		found_word = False
+		if message.get_content_maintype() == 'multipart':
+			for part in message.walk():
+				if part.get_content_maintype() == 'multipart': continue
+				if part.get('Content-Disposition') is None: continue
+				filename = part.get_filename()
+				for common_phishing_word in self.common_phishing_words_attachments:
+					if filename != None and re.search(common_phishing_word, filename, re.IGNORECASE):
+						if verbose:
+							print("[Warning!] Found word "+common_phishing_word+" in attachments")
+						found_word = True
+		return found_word
+
+	def findCommonWordsInEmailAttachementsFromAttachments(attachments):
+		found_word = False
+		for attach in attachments:
+			for attachment_word in attach:
+				for common_phishing_word in self.common_phishing_words_attachments:
+					if attach[a] != None and re.search(common_phishing_word, attach[attachment_word], re.IGNORECASE):
+						if verbose:
+							print("[Warning!] Found word "+common_phishing_word+" in attachments")
+						found_word = True
+		return found_word
