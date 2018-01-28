@@ -101,11 +101,7 @@ class PhishingFilter:
 	    	if re.search(word, body, re.IGNORECASE):
 	       		words = re.findall(word, body, re.IGNORECASE)
 	        	if verbose:
-	          		print(
-    "[Warning!] Word " +
-    word +
-    " founded ({} times) ".format(
-        len(words)))
+	          		print("[Warning!] Word " +word +" founded ({} times) ".format(len(words)))
 	        		binary_cstring.append(len(words))
 	      		else:
 	        		binary_cstring.append(0)
@@ -131,10 +127,7 @@ class PhishingFilter:
 				if part.get('Content-Disposition') is None: continue
 				filename = part.get_filename()
 				for common_phishing_word in self.common_phishing_words_attachments:
-					if filename != None and re.search(
-    common_phishing_word,
-    filename,
-     re.IGNORECASE):
+					if filename != None and re.search(common_phishing_word,filename,re.IGNORECASE):
 						if verbose:
 							print("[Warning!] Found word " +common_phishing_word +" in attachments")
 						found_word = True
@@ -145,10 +138,7 @@ class PhishingFilter:
 		for attach in attachments:
 			for attachment_word in attach:
 				for common_phishing_word in self.common_phishing_words_attachments:
-					if attach[a] != None and re.search(
-    common_phishing_word,
-    attach[attachment_word],
-     re.IGNORECASE):
+					if attach[a] != None and re.search(common_phishing_word,attach[attachment_word],re.IGNORECASE):
 						if verbose:
 							print("[Warning!] Found word " +common_phishing_word +" in attachments")
 						found_word = True
