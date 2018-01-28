@@ -1,4 +1,4 @@
-#coding=utf-8
+# coding=utf-8
 from __future__ import print_function
 
 # Skit-learn
@@ -34,11 +34,12 @@ warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
 reload(sys)
 sys.setdefaultencoding('ISO-8859-2')
 
+
 class PhishingFilter:
 	# Verbose process
 	verbose = True
 	# Classification Categories
-	CATEGORIES = [ 'Phishing', 'Harmless' ]
+	CATEGORIES = ['Phishing', 'Harmless']
 	# Name of model file saved
 	model_path = os.path.join(request.folder, 'static', "finalized_model.sav")
 	# Name of route of the model
@@ -58,8 +59,8 @@ class PhishingFilter:
 		'VERIFY', 'IDENTITY', 'INCONVENIENCE',
 		'INFORMATION', 'LIMITED', 'LOG',
 		'MINUTES', 'PASSWORD', 'RECENTLY',
-		'RISK','SOCIAL', 'SECURITY',
-		'SERVICE', 'SUSPENDED','VALIDATE'
+		'RISK', 'SOCIAL', 'SECURITY',
+		'SERVICE', 'SUSPENDED', 'VALIDATE'
 	]
 
 	def setVerbose(verbose):
@@ -71,7 +72,6 @@ class PhishingFilter:
 	def getCategories():
 		return CATEGORIES
 
-	# Get the email body of an mbox email
 	def getEmailBodyFromMbox(message):
 		body = None
 		if message.is_multipart():
@@ -86,38 +86,42 @@ class PhishingFilter:
 		    	body = message.get_payload(decode=True)}
 		return body
 
-	# Get all links from email body
 	def getLinksFromEmailBody(body):
 	  body_html = BeautifulSoup(body, 'html.parser', from_encoding="iso-8859-1")
 	  return body_html.find_all('a')
 
-	# Get plain text from email body
 	def getPlainTextFromEmailBody(body):
 	  body_html = BeautifulSoup(body, 'html.parser', from_encoding="iso-8859-1")
 	  return body_html.get_text()
 
 	# Find most used words in Phishing emails in email body
-	def findCommonPhishingWordsInBody(body):
+	def findCommonPhishingWordsInBody(self, body):
 		binary_cstring = []
 		for word in self.common_words:
 	    	if re.search(word, body, re.IGNORECASE):
 	       		words = re.findall(word, body, re.IGNORECASE)
 	        	if verbose:
-	          		print("[Warning!] Word "+word+" founded ({} times) ".format(len(words)))
+	          		print(
+    "[Warning!] Word " +
+    word +
+    " founded ({} times) ".format(
+        len(words)))
 	        		binary_cstring.append(len(words))
 	      		else:
 	        		binary_cstring.append(0)
 		return binary_cstring
 
 	# Find most used words in phishing email attachments
-	def findCommonWordsInEmailAttachements(message,attachments=None):
+	def findCommonPhishingWordsInEmailAttachements(
+	    self, message, attachments=None):
 	    binary_castring = []
 	    # If we need to search for attachments inside email
 	    if attachments is None:
 	        return self.findCommonWordsInEmailAttachementsFromMessage(message)
 	    # If we get attachments directly
 	    else:
-	       return self.findCommonWordsInEmailAttachementsFromAttachments(attachments)
+	       return self.findCommonWordsInEmailAttachementsFromAttachments(
+	           attachments)
 
 	def findCommonWordsInEmailAttachementsFromMessage(message):
 		found_word = False
@@ -127,9 +131,12 @@ class PhishingFilter:
 				if part.get('Content-Disposition') is None: continue
 				filename = part.get_filename()
 				for common_phishing_word in self.common_phishing_words_attachments:
-					if filename != None and re.search(common_phishing_word, filename, re.IGNORECASE):
+					if filename != None and re.search(
+    common_phishing_word,
+    filename,
+     re.IGNORECASE):
 						if verbose:
-							print("[Warning!] Found word "+common_phishing_word+" in attachments")
+							print("[Warning!] Found word " +common_phishing_word +" in attachments")
 						found_word = True
 		return found_word
 
@@ -138,12 +145,32 @@ class PhishingFilter:
 		for attach in attachments:
 			for attachment_word in attach:
 				for common_phishing_word in self.common_phishing_words_attachments:
-					if attach[a] != None and re.search(common_phishing_word, attach[attachment_word], re.IGNORECASE):
+					if attach[a] != None and re.search(
+    common_phishing_word,
+    attach[attachment_word],
+     re.IGNORECASE):
 						if verbose:
-							print("[Warning!] Found word "+common_phishing_word+" in attachments")
+							print("[Warning!] Found word " +common_phishing_word +" in attachments")
 						found_word = True
 		return found_word
 
 	# Feature 2 - Look for IP addresses inside email body
 	def findIPAddressesInEmailBody(body):
-	  return re.findall( r'[0-9]+(?:\.[0-9]+){3}', body )
+		return re.findall(r'[0-9]+(?:\.[0-9]+){3}', body )
+
+	# Feature 7 - Find words 'click' and 'here'
+	def findClickHereInBody(body):
+		response = 0
+		if re.search('click here', body, re.IGNORECASE):
+			response = 1;
+		else:
+		    # Si se encuentra la palabra click
+		    if re.search('click', body, re.IGNORECASE):
+		    	response = 2
+		    # Si se encuentra la palabra here
+		    if re.search('here', body, re.IGNORECASE):
+		    	if response == 2:
+		       		response = 4
+		    	elif response == 0:
+		       		response = 3
+		return response
